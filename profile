@@ -15,6 +15,10 @@ NEWLINE=$'\n'
 IP=$(curl -s  ifconfig.me)
 PROMPT='${NEWLINE}%{$fg[blue]%}% %n%{$reset_color%}@%{$fg[red]%}% ${IP} %{$reset_color%}${PWD/#$HOME/~}%B${vcs_info_msg_0_}%b${NEWLINE}\$ '
 
+# Custom profile
+alias editme='vim ~/.zshrc'
+alias sourceme='source ~/.zshrc'
+alias codeme='code ~/.zshrc'
 
 # Docker
 alias dock-destroy='docker rm -f $(docker ps -a -q) ; docker rmi -f $(docker images -q)'
