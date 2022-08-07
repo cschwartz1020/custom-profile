@@ -1,2 +1,3 @@
-# .zshrc
-My profile
+# Custom Profile
+
+My custom zshell profile
