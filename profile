@@ -18,6 +18,9 @@ PROMPT='${NEWLINE}%{$fg[blue]%}% %n%{$reset_color%}@%{$fg[red]%}% ${IP} %{$reset
 
 # Docker
 alias dock-destroy='docker rm -f $(docker ps -a -q) ; docker rmi -f $(docker images -q)'
+alias ubuntu='docker exec -it $(docker run -dit ubuntu) /bin/bash'
+alias debian='docker exec -it $(docker run -dit debian) /bin/bash'
+alias alpine='docker exec -it $(docker run -dit alpine) /bin/sh'
 
 # git
 alias main_branch='git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4'
