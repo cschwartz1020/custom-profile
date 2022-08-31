@@ -75,3 +75,4 @@ alias urldecode='python3 -c "import sys, urllib.parse as ul; \
     print(ul.unquote_plus(sys.argv[1]))"'
 alias urlencode='python3 -c "import sys, urllib.parse as ul; \
     print (ul.quote_plus(sys.argv[1]))"'
+alias interface='route -n get 0.0.0.0 2>/dev/null | awk "/interface: / {print $2}"'
