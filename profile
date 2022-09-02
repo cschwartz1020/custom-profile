@@ -15,10 +15,12 @@ NEWLINE=$'\n'
 IP=$(curl -s  ifconfig.me)
 PROMPT='${NEWLINE}%{$fg[blue]%}% %n%{$reset_color%}@%{$fg[red]%}% ${IP} %{$reset_color%}${PWD/#$HOME/~}%B${vcs_info_msg_0_}%b${NEWLINE}\$ '
 
+
 # Custom profile
 alias editme='vim ~/.zshrc'
 alias sourceme='source ~/.zshrc'
 alias codeme='code ~/.zshrc'
+
 
 # Docker
 alias dock-destroy='docker rm -f $(docker ps -a -q) ; docker rmi -f $(docker images -q)'
@@ -70,9 +72,10 @@ alias cdb='cd ..'
 alias cdbb='cd ../..'
 alias speedt='speedtest-cli'
 mvcd() {mv $1 $2 && cd $2}
-alias ip='curl ifconfig.me'
 alias urldecode='python3 -c "import sys, urllib.parse as ul; \
     print(ul.unquote_plus(sys.argv[1]))"'
 alias urlencode='python3 -c "import sys, urllib.parse as ul; \
     print (ul.quote_plus(sys.argv[1]))"'
 alias interface='route -n get 0.0.0.0 2>/dev/null | awk "/interface: / {print $2}"'
+
+export PATH="/opt/homebrew/bin:/opt/homebrew/opt/openjdk/bin:$PATH"
