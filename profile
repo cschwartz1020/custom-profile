@@ -13,7 +13,7 @@ autoload -U colors && colors
 setopt PROMPT_SUBST
 NEWLINE=$'\n'
 IP=$(curl -s  ifconfig.me)
-PROMPT='${NEWLINE}%{$fg[blue]%}% %n%{$reset_color%}@%{$fg[red]%}% ${IP} %{$reset_color%}${PWD/#$HOME/~}%B${vcs_info_msg_0_}%b${NEWLINE}\$ '
+PROMPT='${NEWLINE}%{$fg[cyan]%}%n%{$reset_color%}@%{$fg[red]%}${IP}%{$reset_color%} %{$fg[yellow]%}[%*]%{$reset_color%} ${PWD/#$HOME/~}%B${vcs_info_msg_0_}%b${NEWLINE}\$ '
 
 
 # Custom profile
@@ -51,6 +51,14 @@ function openpr() {
 alias gca='git commit --amend --no-edit'
 alias gpohf='git push origin HEAD --force-with-lease'
 alias gcaa='git commit --amend --no-edit --allow-empty'
+alias gp='git pull'
+alias gap='git add -p'
+alias gca='git commit --amend'
+alias gcane='git commit --amend --no-edit'
+squash() { git rebase -i HEAD~$1 }
+alias gl='git log --oneline'
+alias grh='git reset --soft HEAD^'
+alias grs='git restore --staged'
 
 # Terraform
 alias tp='terraform plan'
@@ -61,6 +69,11 @@ alias kgp='kubectl get pods'
 alias kgd='kubectl get deployments'
 alias kgdw='kubectl get deployments -w'
 alias kgpw='kubectl get pods -w'
+
+# ffmpeg utilities
+play() {ffplay -vf "drawtext=text='%{pts}':fontcolor=white:fontsize=24:x=10:y=10" $1}
+burn-subs() {ffmpeg -i $1 -vf subtitles=$2 -c:a copy -c:v libx264 -crf 18 $3}
+mux() {ffmpeg -i $1 -i $2 -c:v copy -c:a aac -map 0:v:0 -map 1:a $3}
 
 # Utility
 alias grep="grep --color=always "
@@ -77,5 +90,3 @@ alias urldecode='python3 -c "import sys, urllib.parse as ul; \
 alias urlencode='python3 -c "import sys, urllib.parse as ul; \
     print (ul.quote_plus(sys.argv[1]))"'
 alias interface='route -n get 0.0.0.0 2>/dev/null | awk "/interface: / {print $2}"'
-
-export PATH="/opt/homebrew/bin:/opt/homebrew/opt/openjdk/bin:$PATH"
