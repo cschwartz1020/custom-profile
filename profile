@@ -21,6 +21,50 @@ alias editme='vim ~/.zshrc'
 alias sourceme='source ~/.zshrc'
 alias codeme='code ~/.zshrc'
 
+# Claude
+alias cc='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude --dangerously-load-development-channels server:claude-peers'
+alias ccd='claude --dangerously-skip-permissions'
+
+# Codex
+cx() {
+  local args=(
+    --add-dir "$HOME/.cache"
+    --add-dir "$HOME/.config/gh"
+    --add-dir "$HOME/.aws"
+    --add-dir "$HOME/.kube"
+  )
+
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    local common
+    common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+    args+=(--add-dir "$common")
+    args+=(--add-dir "$(dirname "$common")")
+  fi
+
+  codex "${args[@]}" "$@"
+}
+
+cxd() {
+  local args=(
+    -a never
+    -s danger-full-access
+    --add-dir "$HOME/.cache"
+    --add-dir "$HOME/.config/gh"
+    --add-dir "$HOME/.aws"
+    --add-dir "$HOME/.kube"
+  )
+
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    local common
+    common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+    args+=(--add-dir "$common")
+    args+=(--add-dir "$(dirname "$common")")
+  fi
+
+  codex "${args[@]}" "$@"
+}
+alias ccusage-codex='bunx @ccusage/codex@latest'
+alias ccusage-opencode='bunx @ccusage/opencode@latest'
 
 # Docker
 alias dock-destroy='docker rm -f $(docker ps -a -q) ; docker rmi -f $(docker images -q)'
@@ -60,6 +104,114 @@ alias gl='git log --oneline'
 alias grh='git reset --soft HEAD^'
 alias grs='git restore --staged'
 
+# Git worktree helper
+# Usage: gwt [-c] <branch-name> [git-worktree-args...]
+#   Creates worktree at ~/git/{repo}-{branch} and symlinks configured files
+#   -c          Open Cursor in the new worktree
+#   Extra args are passed to `git worktree add` (e.g., -f to force)
+#
+# To configure files to symlink (in main repo):
+#   echo ".env" >> .git/worktree-link-files
+#   echo ".env.local" >> .git/worktree-link-files
+#   echo "config/local.yml" >> .git/worktree-link-files
+gwt() {
+  local open_cursor=false
+  if [[ "$1" == "-c" ]]; then
+    open_cursor=true
+    shift
+  fi
+
+  local branch="$1"
+  if [[ -z "$branch" ]]; then
+    echo "Usage: gwt [-c] <branch-name> [git-worktree-args...]"
+    return 1
+  fi
+  shift
+  local extra_args=("$@")
+
+  local suffix
+  suffix=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c 6)
+  branch="${branch}-${suffix}"
+
+  local repo_name
+  repo_name=$(basename -s .git "$(git config --get remote.origin.url)" 2>/dev/null)
+  if [[ -z "$repo_name" ]]; then
+    repo_name=$(basename "$(git rev-parse --show-toplevel)")
+  fi
+
+  local main_worktree
+  main_worktree=$(git worktree list --porcelain | head -1 | cut -d' ' -f2)
+
+  local worktree_dir="$HOME/git/${repo_name}-${branch}"
+
+  if ! git worktree add "$worktree_dir" -b "$branch" "${extra_args[@]}" 2>/dev/null; then
+    git worktree add "$worktree_dir" "$branch" "${extra_args[@]}" || return 1
+  fi
+
+  local link_list="$main_worktree/.git/worktree-link-files"
+  if [[ -f "$link_list" ]]; then
+    while IFS= read -r file || [[ -n "$file" ]]; do
+      [[ -z "$file" || "$file" == \#* ]] && continue
+      if [[ -e "$main_worktree/$file" ]]; then
+        mkdir -p "$worktree_dir/$(dirname "$file")"
+        ln -sf "$main_worktree/$file" "$worktree_dir/$file"
+        echo "Linked: $file"
+      fi
+    done < "$link_list"
+  fi
+
+  echo "Worktree created: $worktree_dir"
+  cd "$worktree_dir"
+
+  if $open_cursor; then
+    cursor .
+  fi
+}
+
+# Git worktree remove - removes current worktree and returns to main
+# Usage: gwtr [git-worktree-remove-options]
+#   All arguments are passed directly to `git worktree remove`
+gwtr() {
+  local current_dir
+  current_dir=$(pwd)
+
+  local main_worktree
+  main_worktree=$(git worktree list --porcelain | head -1 | cut -d' ' -f2)
+
+  if [[ "$current_dir" == "$main_worktree" ]]; then
+    echo "Error: Already in main worktree, nothing to remove"
+    return 1
+  fi
+
+  # Get the worktree root (in case we're in a subdirectory)
+  local worktree_root
+  worktree_root=$(git rev-parse --show-toplevel)
+
+  # Close any Cursor window with this worktree open
+  local worktree_name
+  worktree_name=$(basename "$worktree_root")
+  osascript -e "
+    tell application \"System Events\"
+      tell process \"Cursor\"
+        repeat with w in windows
+          if name of w contains \"$worktree_name\" then
+            click button 1 of w
+          end if
+        end repeat
+      end tell
+    end tell
+  " 2>/dev/null
+
+  cd "$main_worktree" || return 1
+  git worktree remove "$worktree_root" "$@" || {
+    cd "$worktree_root"
+    return 1
+  }
+
+  echo "Removed worktree: $worktree_root"
+  echo "Now in: $main_worktree"
+}
+
 # Terraform
 alias tp='terraform plan'
 alias tir='terraform init -reconfigure'
@@ -69,6 +221,9 @@ alias kgp='kubectl get pods'
 alias kgd='kubectl get deployments'
 alias kgdw='kubectl get deployments -w'
 alias kgpw='kubectl get pods -w'
+alias kgpaW='kubectl get pods -A -o wide'
+alias kgpawW='kubectl get pods -A -o wide -w'
+alias kctx='kubectl config current-context'
 
 # ffmpeg utilities
 play() {ffplay -vf "drawtext=text='%{pts}':fontcolor=white:fontsize=24:x=10:y=10" $1}
